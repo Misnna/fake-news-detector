@@ -12,9 +12,7 @@ Usage as a CLI:
 """
 import argparse
 
-import torch
 import yaml
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from src.preprocess import clean_text
 from src.trust_score import compute_trust_score
@@ -25,8 +23,6 @@ class FakeNewsDetector:
         with open(config_path, "r") as f:
             self.config = yaml.safe_load(f)
 
-        # Restrict PyTorch to 1 CPU thread to preserve RAM on 512MB environments (like Render Free)
-        torch.set_num_threads(1)
         self.device = "cpu"
         self.max_length = self.config["model"].get("max_length", 128)
         self.weights = self.config["trust_score"]
@@ -35,21 +31,31 @@ class FakeNewsDetector:
         self.use_fallback = False
 
         import os
-        target_dir = model_dir if os.path.exists(model_dir) else self.config["model"]["name"]
 
-        try:
+        # Only attempt to load PyTorch Transformer model if local trained model directory exists.
+        # On memory-constrained cloud servers (e.g. Render 512MB), skip heavy downloads to keep RAM under 40MB.
+        if os.path.exists(model_dir):
             try:
-                self.tokenizer = AutoTokenizer.from_pretrained(target_dir, use_fast=True)
-            except Exception:
-                from transformers import DebertaV2Tokenizer
-                self.tokenizer = DebertaV2Tokenizer.from_pretrained(target_dir)
+                import torch
+                from transformers import AutoModelForSequenceClassification, AutoTokenizer
+                torch.set_num_threads(1)
 
-            self.model = AutoModelForSequenceClassification.from_pretrained(
-                target_dir, low_cpu_mem_usage=True
-            ).to(self.device)
-            self.model.eval()
-        except Exception as e:
-            print(f"[Warning] Could not load Transformer model ({e}). Using lightweight Trust-Score fallback.")
+                try:
+                    self.tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=True)
+                except Exception:
+                    from transformers import DebertaV2Tokenizer
+                    self.tokenizer = DebertaV2Tokenizer.from_pretrained(model_dir)
+
+                self.model = AutoModelForSequenceClassification.from_pretrained(
+                    model_dir, low_cpu_mem_usage=True
+                ).to(self.device)
+                self.model.eval()
+                print("[Info] Successfully loaded local PyTorch Transformer model.")
+            except Exception as e:
+                print(f"[Warning] Could not load PyTorch model: {e}. Using lightweight Trust-Score mode.")
+                self.use_fallback = True
+        else:
+            print(f"[Info] Local model '{model_dir}' not present. Running in lightweight Trust-Score mode (RAM < 40MB).")
             self.use_fallback = True
 
     def predict(self, text: str, source: str = ""):
@@ -59,6 +65,7 @@ class FakeNewsDetector:
 
         if not self.use_fallback and self.model is not None and self.tokenizer is not None:
             try:
+                import torch
                 inputs = self.tokenizer(
                     cleaned, truncation=True, padding=True,
                     max_length=self.max_length, return_tensors="pt"
