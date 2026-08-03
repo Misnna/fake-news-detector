@@ -12,8 +12,13 @@ from src.inference import FakeNewsDetector
 from src.url_extractor import extract_article_text, URLExtractionError
 from src.image_extractor import extract_text_from_image, ImageExtractionError
 
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(BASE_DIR, "config.yaml")
+model_dir = os.path.join(BASE_DIR, "saved_model", "final")
+
 app = Flask(__name__)
-detector = FakeNewsDetector("saved_model/final", "config.yaml")
+detector = FakeNewsDetector(model_dir, config_path)
 
 STYLE = """
 <style>
