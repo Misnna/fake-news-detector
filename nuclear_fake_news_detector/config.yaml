@@ -1,0 +1,55 @@
+# ==========================================================
+# Configuration for Nuclear Power Safety Fake News Detector
+# ==========================================================
+
+model:
+  # This is a RoBERTa model ALREADY fine-tuned on 40,000+ real news
+  # articles from diverse media sources (not just our small nuclear-only
+  # dataset). Starting from this instead of plain "roberta-base" gives
+  # the model a much stronger head start on recognizing real-world
+  # writing style diversity (including legitimate exciting/celebratory
+  # headlines), which directly fixes false positives like genuine
+  # "milestone" news getting flagged as fake. We then further fine-tune
+  # it on our nuclear-specific data so it also learns the domain
+  # vocabulary (plant names, agencies, radiation terminology).
+  #
+  # Alternatives: "roberta-base" (train from scratch, more nuclear-
+  # specific but less general), "roberta-large" (bigger/slower),
+  # "microsoft/deberta-v3-base" (different architecture, often strong).
+  name: "Arko007/fake-news-roberta-5M"
+  num_labels: 2          # 0 = Fake/Misinformation, 1 = Real/Credible
+  max_length: 256
+  unfreeze_top_layers: 2
+
+training:
+  output_dir: "./saved_model"
+  num_train_epochs: 3
+  train_batch_size: 16
+  eval_batch_size: 32
+  learning_rate: 2e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.06
+  early_stopping_patience: 3
+  seed: 42
+  fp16: true              # set false if training on CPU
+  label_smoothing_factor: 0.1
+
+data:
+  raw_csv: "data/sample_dataset.csv"
+  text_column: "statement"
+  label_column: "label"
+  source_column: "source"
+  test_size: 0.15
+  val_size: 0.15
+
+trust_score:
+  # Weights must sum to 1.0 - tune these based on validation results
+  weight_model_confidence: 0.45
+  weight_source_credibility: 0.25
+  weight_corroboration: 0.20
+  weight_sentiment_neutrality: 0.10
+
+scraping:
+  # Optional ScraperAPI key (get 5,000 free requests/month at scraperapi.com)
+  # When provided, direct URL scraping bypasses anti-bot protection (e.g. Reuters)
+  scraperapi_key: ""

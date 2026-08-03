@@ -1,0 +1,32 @@
+# Virtual environment
+venv/
+**/venv/
+ENV/
+env/
+
+# Model weights & Checkpoints
+saved_model/
+**/saved_model/
+*.safetensors
+*.pt
+*.bin
+*.onnx
+
+# Python cache files
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Workspace & Scratch artifacts
+.gemini/
+scratch/
