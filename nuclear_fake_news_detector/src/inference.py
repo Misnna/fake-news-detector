@@ -21,35 +21,58 @@ from src.trust_score import compute_trust_score
 
 
 class FakeNewsDetector:
-    def __init__(self, model_dir: str, config_path: str = "config.yaml"):
+    def __init__(self, model_dir: str = "saved_model/final", config_path: str = "config.yaml"):
         with open(config_path, "r") as f:
             self.config = yaml.safe_load(f)
 
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        try:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=False)
-        except Exception:
-            from transformers import DebertaV2Tokenizer
-            self.tokenizer = DebertaV2Tokenizer.from_pretrained(model_dir)
-        self.model = AutoModelForSequenceClassification.from_pretrained(model_dir).to(self.device)
-        self.model.eval()
-        self.max_length = self.config["model"]["max_length"]
+        # Restrict PyTorch to 1 CPU thread to preserve RAM on 512MB environments (like Render Free)
+        torch.set_num_threads(1)
+        self.device = "cpu"
+        self.max_length = self.config["model"].get("max_length", 128)
         self.weights = self.config["trust_score"]
+        self.model = None
+        self.tokenizer = None
+        self.use_fallback = False
+
+        import os
+        target_dir = model_dir if os.path.exists(model_dir) else self.config["model"]["name"]
+
+        try:
+            try:
+                self.tokenizer = AutoTokenizer.from_pretrained(target_dir, use_fast=True)
+            except Exception:
+                from transformers import DebertaV2Tokenizer
+                self.tokenizer = DebertaV2Tokenizer.from_pretrained(target_dir)
+
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                target_dir, low_cpu_mem_usage=True
+            ).to(self.device)
+            self.model.eval()
+        except Exception as e:
+            print(f"[Warning] Could not load Transformer model ({e}). Using lightweight Trust-Score fallback.")
+            self.use_fallback = True
 
     def predict(self, text: str, source: str = ""):
         cleaned = clean_text(text)
-        inputs = self.tokenizer(
-            cleaned, truncation=True, padding="max_length",
-            max_length=self.max_length, return_tensors="pt"
-        ).to(self.device)
+        prob_real = 0.5
+        prob_fake = 0.5
 
-        with torch.no_grad():
-            logits = self.model(**inputs).logits
-            probs = torch.softmax(logits, dim=-1).cpu().numpy()[0]
+        if not self.use_fallback and self.model is not None and self.tokenizer is not None:
+            try:
+                inputs = self.tokenizer(
+                    cleaned, truncation=True, padding=True,
+                    max_length=self.max_length, return_tensors="pt"
+                ).to(self.device)
 
-        prob_fake = float(probs[0])
-        prob_real = float(probs[1])
-        predicted_label = "Real" if prob_real > prob_fake else "Fake"
+                with torch.no_grad():
+                    logits = self.model(**inputs).logits
+                    probs = torch.softmax(logits, dim=-1).cpu().numpy()[0]
+                    prob_fake = float(probs[0])
+                    prob_real = float(probs[1])
+            except Exception as e:
+                print(f"[Warning] Model prediction failed: {e}. Falling back to trust score heuristics.")
+
+        predicted_label = "Real" if prob_real >= prob_fake else "Fake"
 
         trust_result = compute_trust_score(
             text=cleaned,
