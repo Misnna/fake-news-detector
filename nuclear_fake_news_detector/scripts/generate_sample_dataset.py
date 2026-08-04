@@ -27,8 +27,8 @@ AGENCIES = ["the IAEA", "the World Nuclear Association", "the UK Office for Nucl
 
 NUMBERS = ["0.02", "0.05", "0.1", "0.3", "1.2", "2.5"]
 UNITS = ["millisieverts", "microsieverts per hour", "becquerels per litre"]
-DATES = ["this week", "on Tuesday", "in a report published Monday", "following a routine review",
-         "after a scheduled inspection", "in the latest quarterly update"]
+DATES = ["this week", "on 04/08/2026", "in a report dated 15/07/2026", "following routine review on 01/08/2026",
+         "after a scheduled inspection on 22/06/2026", "in the latest quarterly update (04/08/2026)"]
 
 REAL_TEMPLATES = [
     "{plant} completed a scheduled safety inspection {date} with no radiological anomalies reported.",

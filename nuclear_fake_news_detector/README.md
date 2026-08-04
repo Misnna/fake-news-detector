@@ -1,4 +1,4 @@
-# Nuclear Power Safety Fake News Detection & Trust Scoring System
+# NUCLEAR REBUILD
 
 Fine-tunes a **RoBERTa-based classifier** to classify nuclear-safety-related
 statements as **Real** or **Fake**, and combines the model's prediction

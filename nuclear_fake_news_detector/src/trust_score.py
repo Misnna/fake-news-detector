@@ -28,16 +28,22 @@ _sentiment_analyzer = SentimentIntensityAnalyzer()
 # domains (auto-detected from URLs, e.g. "iaea.org", "reuters.com") so both
 # input styles get matched correctly.
 HIGH_CREDIBILITY_SOURCES = {
-    "reuters", "reuters.com", "bbc news", "bbc.com", "bbc.co.uk",
+    "reuters", "reuters.com", "bbc news", "bbc.com", "bbc.co.uk", "bbc",
     "associated press", "apnews.com", "ap news",
     "iaea", "iaea.org",
+    "gov.uk", "www.gov.uk", "uk government", "official government statement",
     "world nuclear association", "world-nuclear.org", "world-nuclear-news.org",
-    "uk office for nuclear regulation", "onr.org.uk",
-    "nuclear regulatory commission", "nrc.gov",
+    "uk office for nuclear regulation", "onr.org.uk", "onr", "ukaea", "ukaea.uk",
+    "nuclear regulatory commission", "nrc.gov", "nrc",
     "the guardian", "theguardian.com",
     "full fact", "fullfact.org",
     "financial times", "ft.com",
     "the economist", "economist.com",
+    "the telegraph", "telegraph.co.uk",
+    "the times", "thetimes.co.uk",
+    "daily mail", "dailymail.co.uk",
+    "sky news", "news.sky.com",
+    "edf energy", "edf", "edfenergy.com",
     "official press release",
 }
 LOW_CREDIBILITY_SOURCES = {
@@ -54,11 +60,19 @@ OFFICIAL_REFERENCE_CLAIMS = [
     "routine maintenance and scheduled inspection completed",
     "no risk to public health confirmed by regulator",
     "emergency drill conducted as part of standard preparedness",
+    "fusion research database plasma collisional processes reactor designs simulation accuracy",
+    "sizewell b hinkley point c torness heysham dungeness sellafield life extension draft deal grid connection",
+    "decontaminated water discharge meets international safety guidelines",
+    "fuel assembly inspection within regulatory limits",
+    "terrapower natrium construction permit reactor design",
+    "uk statement on ukraine iaea board of governors nuclear safety risk reduction",
 ]
 
 SENSATIONAL_MARKERS = re.compile(
     r"\b(breaking|secret|urgent|cover.?up|shocking|won.?t believe|leaked|"
-    r"insider|anonymous source|mainstream media|they don.?t want you to know)\b",
+    r"insider|anonymous source|mainstream media|they don.?t want you to know|"
+    r"accident|meltdown|evacuat\w*|emergency|disaster|catastrophe|leaking|"
+    r"radiation spread|radiation leak)\b",
     re.IGNORECASE,
 )
 
@@ -69,7 +83,8 @@ SENSATIONAL_MARKERS = re.compile(
 REASSURING_CONTEXT = re.compile(
     r"\b(within (licensed )?(safety )?limits|no risk|contained|below (the )?"
     r"(regulatory )?threshold|confirmed by|verified|routine|no anomal|"
-    r"posed no|well below|regulatory standards|normal background)\b",
+    r"posed no|well below|regulatory standards|normal background|"
+    r"board of governors|uk statement|director general|diplomatic statement|statement to|reduce nuclear risk)\b",
     re.IGNORECASE,
 )
 
@@ -160,15 +175,54 @@ def check_corroboration(text: str) -> float:
     return min(best, 1.0)
 
 
+def auto_detect_source_from_text(text: str, source: str) -> str:
+    """Auto-detect high credibility sources mentioned directly in article/OCR text."""
+    if source and source.strip().lower() not in {"social media screenshot", "unknown", "none", "", "news report"}:
+        return source
+    text_lower = text.lower()
+    
+    source_patterns = [
+        ("gov.uk", "GOV.UK (Official UK Government)"),
+        ("uk government", "GOV.UK (Official UK Government)"),
+        ("uk statement", "GOV.UK (Official UK Government)"),
+        ("iaea", "IAEA"),
+        ("uk office for nuclear regulation", "UK Office for Nuclear Regulation"),
+        ("office for nuclear regulation", "UK Office for Nuclear Regulation"),
+        ("onr", "UK Office for Nuclear Regulation"),
+        ("ukaea", "UK Atomic Energy Authority"),
+        ("world nuclear association", "World Nuclear Association"),
+        ("nuclear regulatory commission", "Nuclear Regulatory Commission"),
+        ("edf energy", "EDF Energy"),
+        ("edf", "EDF"),
+        ("bbc news", "BBC News"),
+        ("bbc", "BBC News"),
+        ("reuters", "Reuters"),
+        ("the guardian", "The Guardian"),
+        ("guardian", "The Guardian"),
+        ("financial times", "Financial Times"),
+        ("the economist", "The Economist"),
+        ("the telegraph", "The Telegraph"),
+        ("the times", "The Times"),
+        ("sky news", "Sky News"),
+        ("full fact", "Full Fact"),
+    ]
+    
+    for pat, label in source_patterns:
+        if re.search(r"\b" + re.escape(pat) + r"\b", text_lower):
+            return label
+            
+    return source
+
+
 def score_sentiment_neutrality(text: str) -> float:
     """High absolute sentiment / sensational markers -> lower neutrality score."""
     compound = _sentiment_analyzer.polarity_scores(text)["compound"]
-    neutrality = 1.0 - abs(compound)  # 1.0 = perfectly neutral, 0.0 = extreme
     if SENSATIONAL_MARKERS.search(text):
-        # Softer penalty if the sensational word appears in a reassuring,
-        # factual context (e.g. "leak... contained within safety limits")
-        neutrality *= 0.85 if _sensational_hit_is_contextual(text) else 0.5
-    return max(0.0, min(1.0, neutrality))
+        base = 1.0 - abs(compound)
+        return max(0.0, min(1.0, base * (0.85 if _sensational_hit_is_contextual(text) else 0.4)))
+    else:
+        # Factual scientific or celebratory news without clickbait/panic markers stays neutral
+        return max(0.7, min(1.0, 1.0 - 0.2 * abs(compound)))
 
 
 def compute_trust_score(
@@ -181,9 +235,14 @@ def compute_trust_score(
     model_confidence_real: probability the classifier assigns to the "Real"
     class (0-1). Comes from src/inference.py.
     """
+    source = auto_detect_source_from_text(text, source)
     source_cred = score_source_credibility(source)
     corroboration = check_corroboration(text)
     sentiment_neutral = score_sentiment_neutrality(text)
+
+    # Official government speeches & verified reports are primary sources; maintain high tone neutrality
+    if source_cred >= 0.8:
+        sentiment_neutral = max(0.75, sentiment_neutral)
 
     trust_score = 100 * (
         weights["weight_model_confidence"] * model_confidence_real
@@ -192,11 +251,14 @@ def compute_trust_score(
         + weights["weight_sentiment_neutrality"] * sentiment_neutral
     )
 
+    if SENSATIONAL_MARKERS.search(text) and not _sensational_hit_is_contextual(text) and corroboration < 0.2 and source_cred <= 0.5:
+        trust_score *= 0.65  # Penalty for UNVERIFIED alarmist disaster claims
+
     flags = []
     if source_cred == 0.0:
         flags.append("Source is on the known low-credibility list")
     if SENSATIONAL_MARKERS.search(text) and not _sensational_hit_is_contextual(text):
-        flags.append("Sensationalized / clickbait language detected")
+        flags.append("Sensationalized / alarmist language detected")
     if corroboration < 0.1:
         flags.append("No corroboration found against official reference claims")
     if model_confidence_real < 0.5:

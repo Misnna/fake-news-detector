@@ -54,7 +54,7 @@ def _fetch_html_requests(url: str, timeout: int):
         return None, (
             "This site actively blocks automated access (HTTP 403 Forbidden) — "
             "a deliberate anti-bot protection on their end (common on major news "
-            "sites like Reuters, Business Standard, Times of India, etc.), not a "
+            "sites like Reuters, BBC News, The Guardian, etc.), not a "
             "bug in this tool. Workaround: open the article in your browser, copy "
             "the text, then paste it into the 'Paste Text' tab instead."
         )
@@ -174,6 +174,21 @@ def _extract_from_youtube(url: str, timeout: int = 10) -> dict:
     return {"title": "", "body_text": ""}
 
 
+def _guess_source_from_url(url: str) -> str:
+    try:
+        domain = url.split("//")[-1].split("/")[0].lower()
+        domain = domain.replace("www.", "")
+        if "reuters" in domain:
+            return "Reuters"
+        if "bbc" in domain:
+            return "BBC News"
+        if "theguardian" in domain:
+            return "The Guardian"
+        return domain
+    except Exception:
+        return ""
+
+
 def _extract_text_from_url_slug(url: str) -> dict:
     """
     Fallback method when site blocks scraping or URL is 404/truncated:
@@ -182,17 +197,13 @@ def _extract_text_from_url_slug(url: str) -> dict:
     """
     try:
         parsed = urllib.parse.urlparse(url)
-        domain = parsed.netloc.lower()
-        if domain.startswith("www."):
-            domain = domain[4:]
-            
         source = _guess_source_from_url(url)
         
-        path = parsed.path
+        path = parsed.path.rstrip("/")
         path = re.sub(r"\.(html|htm|php|aspx|amp)$", "", path, flags=re.IGNORECASE)
         words = re.findall(r"[a-zA-Z]{2,}", path)
         
-        ignore_words = {"article", "articles", "news", "business", "world", "india", "story", "index", "latest", "update", "updates", "amp"}
+        ignore_words = {"article", "articles", "news", "business", "world", "story", "index", "latest", "update", "updates", "amp"}
         clean_words = [w.capitalize() for w in words if w.lower() not in ignore_words]
         
         if clean_words:

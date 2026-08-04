@@ -79,14 +79,22 @@ class FakeNewsDetector:
             except Exception as e:
                 print(f"[Warning] Model prediction failed: {e}. Falling back to trust score heuristics.")
 
-        predicted_label = "Real" if prob_real >= prob_fake else "Fake"
-
         trust_result = compute_trust_score(
             text=cleaned,
             model_confidence_real=prob_real,
             source=source,
             weights=self.weights,
         )
+
+        # Multi-factor ensemble prediction: combines neural classifier with trust score engine
+        if trust_result.trust_score < 50 or trust_result.label == "Likely Misinformation":
+            predicted_label = "Fake"
+        elif trust_result.source_credibility >= 0.8 and trust_result.trust_score >= 50:
+            predicted_label = "Real"
+        elif trust_result.trust_score >= 60:
+            predicted_label = "Real"
+        else:
+            predicted_label = "Fake" if prob_fake > prob_real else "Real"
 
         return {
             "text": text,

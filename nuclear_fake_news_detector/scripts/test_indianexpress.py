@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 def main():
-    url = "https://indianexpress.com/article/business/kudankulam-nuclear-power-plant-data-breach-reliance-group-world-leaks-rans"
+    url = "https://www.bbc.co.uk/news/articles/c1112223334o"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",

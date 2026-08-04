@@ -112,7 +112,7 @@ table_body_style = ParagraphStyle(
 story = []
 
 # Title Banner
-story.append(Paragraph("Nuclear Power Safety — Fake News & Trust Score Detector", title_style))
+story.append(Paragraph("NUCLEAR REBUILD", title_style))
 story.append(Paragraph("Complete Project Explanation in Simple Terms (ML, NLP & Modalities)", subtitle_style))
 story.append(HRFlowable(width="100%", thickness=2, color=ACCENT, spaceBefore=0, spaceAfter=15))
 

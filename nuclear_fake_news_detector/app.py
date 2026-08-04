@@ -250,14 +250,14 @@ INDEX_PAGE = """
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Nuclear Safety — Real / Fake News Detector</title>
+  <title>NUCLEAR REBUILD — Real / Fake News Detector</title>
   """ + STYLE + """
 </head>
 <body>
   <div class="header-card">
     <div class="brand-logo">
       <div class="brand-icon">☢️</div>
-      Nuclear Power Safety — Real / Fake News Detector
+      NUCLEAR REBUILD — Real / Fake News Detector
     </div>
   </div>
 
@@ -277,7 +277,7 @@ INDEX_PAGE = """
         
         <div style="margin-top: 14px;">
           <label>Source Name (optional):</label>
-          <input type="text" name="source" class="input-box" value="{{ input_source if mode == 'text' else '' }}" placeholder="e.g. Reuters, BBC News, or leave blank">
+          <input type="text" name="source" class="input-box" value="{{ input_source if mode == 'text' else '' }}" placeholder="e.g. BBC News, Reuters, or leave blank">
         </div>
         
         <button type="submit" class="scan-btn">Predict ⚡</button>
@@ -293,7 +293,7 @@ INDEX_PAGE = """
         
         <div style="margin-top: 14px;">
           <label>Source Name (optional — auto-detected from domain if blank):</label>
-          <input type="text" name="source" class="input-box" value="{{ input_source if mode == 'url' else '' }}" placeholder="e.g. Times of India, Reuters">
+          <input type="text" name="source" class="input-box" value="{{ input_source if mode == 'url' else '' }}" placeholder="e.g. BBC News, The Guardian, Reuters">
         </div>
         
         <button type="submit" class="scan-btn">Predict ⚡</button>
@@ -335,11 +335,9 @@ INDEX_PAGE = """
     <div class="result-top">
       <div>
         {% if result.classifier_prediction == "Real" %}
-          <span class="verity-badge v-badge-green">Primary Source</span>
-          <div style="font-size:18px; font-weight:800; color:#0f172a; margin-top:6px;">Verified Credible News</div>
+          <div style="font-size:32px; font-weight:900; color:#15803d; letter-spacing:1px;">REAL</div>
         {% else %}
-          <span class="verity-badge v-badge-red">Disinformation Alert</span>
-          <div style="font-size:18px; font-weight:800; color:#0f172a; margin-top:6px;">Flagged Misinformation</div>
+          <div style="font-size:32px; font-weight:900; color:#b91c1c; letter-spacing:1px;">FAKE</div>
         {% endif %}
       </div>
 
@@ -404,8 +402,14 @@ INDEX_PAGE = """
 def _guess_source_from_url(url: str) -> str:
     """Very light heuristic: pull the domain name as a fallback source label."""
     try:
-        domain = url.split("//")[-1].split("/")[0]
+        domain = url.split("//")[-1].split("/")[0].lower()
         domain = domain.replace("www.", "")
+        if "reuters" in domain:
+            return "Reuters"
+        if "bbc" in domain:
+            return "BBC News"
+        if "theguardian" in domain:
+            return "The Guardian"
         return domain
     except Exception:
         return ""
