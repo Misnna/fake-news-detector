@@ -1,12 +1,12 @@
 """
-Generates data/sample_dataset.csv — an EXPANDED, more diverse starter
-dataset of nuclear-power-safety statements labeled real (0) / fake (1).
+Generates data/sample_dataset.csv — an EXPANDED, UK & IAEA focused starter
+dataset of nuclear-power-safety statements labeled real (1) / fake (0).
 
-This version uses many more sentence templates, randomized numeric/date
-details, varied phrasing, and includes tricky "safe use of alarming
-words" examples (e.g. "leaked" used in a reassuring, factual sentence)
-so the model learns actual patterns instead of memorizing a handful of
-fixed sentences.
+Includes data sources specific to nuclear fact-checking:
+- IAEA Incident and Emergency Centre reports
+- National regulators (UK Office for Nuclear Regulation - ONR, US NRC)
+- Radiation monitoring networks (EURDEP, EPA RadNet)
+- Nuclear fact-checking archives (Full Fact UK, Snopes, PolitiFact)
 
 Run:  python scripts/generate_sample_dataset.py
 """
@@ -16,25 +16,36 @@ import os
 
 random.seed(42)
 
-PLANTS = ["Hinkley Point C", "Sizewell B", "Torness", "Heysham", "Dungeness B",
-          "Fukushima Daiichi", "Chernobyl", "Three Mile Island", "Vogtle",
-          "Diablo Canyon", "Bruce Nuclear", "Kashiwazaki-Kariwa", "Cattenom",
-          "Wylfa", "Hunterston B", "Oldbury", "Sellafield", "Paks Nuclear Plant"]
+# UK Nuclear Power Stations and IAEA international reference sites
+PLANTS = [
+    "Hinkley Point C", "Sizewell B", "Torness", "Heysham 1", "Heysham 2",
+    "Dungeness B", "Hunterston B", "Wylfa", "Oldbury", "Sellafield",
+    "Springfields", "Capenhurst", "Hartlepool", "Bradwell", "Sizewell C",
+    "Fukushima Daiichi", "Chernobyl", "Zaporizhzhia"
+]
 
-AGENCIES = ["the IAEA", "the World Nuclear Association", "the UK Office for Nuclear Regulation",
-            "the Nuclear Regulatory Commission", "the plant operator", "independent inspectors",
-            "the national radiation monitoring agency", "EDF Energy", "TEPCO"]
+AGENCIES = [
+    "the IAEA Incident and Emergency Centre", "the IAEA",
+    "the UK Office for Nuclear Regulation (ONR)", "the UK Atomic Energy Authority (UKAEA)",
+    "the Department for Energy Security and Net Zero (DESNZ)", "EDF Energy",
+    "the World Nuclear Association", "independent ONR inspectors",
+    "the EURDEP radiation monitoring network", "Full Fact UK",
+    "the Nuclear Regulatory Commission (NRC)"
+]
 
-NUMBERS = ["0.02", "0.05", "0.1", "0.3", "1.2", "2.5"]
+NUMBERS = ["0.01", "0.02", "0.05", "0.1", "0.3", "1.2", "2.5"]
 UNITS = ["millisieverts", "microsieverts per hour", "becquerels per litre"]
-DATES = ["this week", "on 04/08/2026", "in a report dated 15/07/2026", "following routine review on 01/08/2026",
-         "after a scheduled inspection on 22/06/2026", "in the latest quarterly update (04/08/2026)"]
+DATES = [
+    "this week", "on 04/08/2026", "in a report dated 15/07/2026",
+    "following routine review on 01/08/2026", "after a scheduled inspection on 22/06/2026",
+    "in the latest quarterly update (04/08/2026)", "in an official IAEA IEC bulletin"
+]
 
 REAL_TEMPLATES = [
     "{plant} completed a scheduled safety inspection {date} with no radiological anomalies reported.",
     "{agency} confirmed that {plant} remains within all licensed safety limits following routine monitoring.",
-    "Independent radiation monitoring around {plant} shows levels of {num} {unit}, consistent with natural background radiation.",
-    "The operator of {plant} published its annual environmental safety report {date}, confirming compliance with regulatory standards.",
+    "Independent radiation monitoring around {plant} via EURDEP shows levels of {num} {unit}, consistent with natural background radiation.",
+    "The operator of {plant} published its annual environmental safety report {date}, confirming compliance with ONR regulatory standards.",
     "{plant}'s containment systems passed a stress test as part of periodic safety review requirements.",
     "{agency} stated that a minor water leak at {plant} was contained within safety protocols and posed no risk to public health.",
     "A peer-reviewed study found no statistically significant increase in radiation exposure near {plant}.",
@@ -44,28 +55,21 @@ REAL_TEMPLATES = [
     "A small quantity of tritiated water was released from {plant} in line with permitted discharge limits, {agency} confirmed.",
     "{agency} said radiation readings near {plant} measured {num} {unit}, well below the regulatory threshold.",
     "Engineers at {plant} identified and repaired a minor coolant pipe leak {date}; no radioactive material was involved.",
-    "{plant} received certification renewal from {agency} after meeting all updated safety criteria.",
-    "A leaked internal memo from {plant}, later verified by {agency}, outlined routine upgrades to backup cooling systems.",
+    "{plant} received certification renewal from {agency} after meeting all updated UK safety criteria.",
+    "A verified internal memo from {plant}, confirmed by {agency}, outlined routine upgrades to backup cooling systems.",
     "{agency} clarified that reports of unusual readings at {plant} were traced to a sensor calibration error, now corrected.",
     "Officials confirmed the recent alarm at {plant} was triggered by a false positive and no radiation escaped containment.",
     "Public health authorities stated there is no elevated cancer risk for communities near {plant}, based on decades of monitoring data.",
     "{plant} has operated without a Level 2 or higher safety incident for over a decade, according to {agency}.",
     "A newly published dataset from {agency} shows radiation levels near {plant} have remained stable for the past five years.",
-    # --- Real "milestone / achievement" style headlines: legitimate news
-    # often uses energetic, celebratory phrasing for genuine achievements —
-    # these examples teach the model not to treat excitement as a fake-news
-    # signal on its own. ---
+    "IAEA Incident and Emergency Centre reports confirm that zero radioactive releases occurred following the electrical trip at {plant}.",
     "'Historic milestone': {plant} achieves first criticality as construction reaches completion, {agency} confirms.",
-    "In a major milestone, {plant} successfully connected to the national grid for the first time {date}.",
+    "In a major milestone for UK clean energy, {plant} successfully connected to the national grid for the first time {date}.",
     "{plant} marks a landmark achievement after receiving final operating approval from {agency}.",
-    "Officials hailed the successful startup of {plant} as a major step forward for the country's clean energy goals.",
+    "UK officials hailed the successful startup of {plant} as a major step forward for the country's clean energy goals.",
     "{plant} celebrated its 30th anniversary of safe operation, with {agency} praising its strong safety record.",
-    "In a breakthrough for the industry, {plant} became the first reactor of its kind to complete commissioning tests, {agency} announced.",
-    "{agency} congratulated engineers at {plant} on completing a record-breaking safety inspection with zero issues found.",
-    "'A proud day for the nation': {plant} generates first power as part of the country's expanding nuclear programme.",
-    # --- Real news: technical specs and safety parameter updates ---
     "Engineers at {plant} successfully completed tests on the standard fuel assembly, reporting efficiency gains within expected safety margins.",
-    "{agency} verified that the waste containment system at {plant} complies with international safety standards.",
+    "{agency} verified that the waste containment system at {plant} complies with international IAEA safety standards.",
     "A study by {agency} concluded that radiological monitoring near {plant} showed no deviation from natural background levels.",
     "{agency} published technical specifications for the new reactor design at {plant}, confirming standard safety parameters.",
 ]
@@ -91,26 +95,26 @@ FAKE_TEMPLATES = [
     "Screenshot circulating online falsely attributes a radiation warning to {agency}, which it never issued.",
     "Viral claim says birds are 'falling from the sky' near {plant} due to a radiation leak with zero evidence provided.",
     "An unverified chain message warns {plant} will 'explode like Fukushima' within days, with no credible source.",
-    # --- Journalistic-style pseudo-scientific misinformation (calm, fake news) ---
     "A startup reportedly developed self-cooling fuel rods that eliminate nuclear radiation entirely at {plant}.",
     "Scientists claim a new reactor design at {plant} produces unlimited free electricity using self-recharging uranium.",
     "Independent researchers claim to have created a fusion reactor at {plant} that runs on ordinary tap water with zero waste.",
     "An international consortium announced the creation of a zero-radiation nuclear waste disposal method at {plant}.",
     "A leaked memo suggests {plant} has achieved infinite energy output using a cold-fusion catalyst.",
-    "Leaked documents claim {plant} is secretly testing a technology that allows unlimited power generation with no fuel reload.",
-    "A viral report claims a local engineer successfully converted {plant}'s waste into completely harmless drinking water.",
-    "Reports suggest {plant} has secretly deployed a magnetic shielding device that completely stops all gamma radiation.",
 ]
 
-REAL_SOURCES = ["Reuters", "BBC News", "IAEA", "World Nuclear Association",
-                "UK Office for Nuclear Regulation", "Associated Press",
-                "Nuclear Regulatory Commission", "The Guardian", "Full Fact",
-                "Financial Times", "The Economist", "Official press release"]
+REAL_SOURCES = [
+    "IAEA Incident and Emergency Centre", "IAEA", "UK Office for Nuclear Regulation",
+    "BBC News", "Reuters", "The Guardian", "Financial Times", "The Times",
+    "The Telegraph", "Sky News", "Full Fact", "GOV.UK", "EURDEP",
+    "World Nuclear Association", "EDF Energy", "Official press release"
+]
 
-FAKE_SOURCES = ["Anonymous Blog Post", "Unverified Facebook Page",
-                "Random Telegram Channel", "Clickbait News Network",
-                "Unknown Twitter/X Account", "Conspiracy Forum Post",
-                "SecretTruthNews.biz", "Viral WhatsApp Forward"]
+FAKE_SOURCES = [
+    "Anonymous Blog Post", "Unverified Facebook Page",
+    "Random Telegram Channel", "Clickbait News Network",
+    "Unknown Twitter/X Account", "Conspiracy Forum Post",
+    "SecretTruthNews.biz", "Viral WhatsApp Forward"
+]
 
 
 def fill(template):
@@ -152,8 +156,8 @@ def main():
         writer.writerows(unique_rows)
 
     print(f"Wrote {len(unique_rows)} unique rows to {out_path}")
-    print(f"Real (0): {sum(1 for r in unique_rows if r['label']==0)} | "
-          f"Fake (1): {sum(1 for r in unique_rows if r['label']==1)}")
+    print(f"Real (1): {sum(1 for r in unique_rows if r['label']==1)} | "
+          f"Fake (0): {sum(1 for r in unique_rows if r['label']==0)}")
 
 
 if __name__ == "__main__":

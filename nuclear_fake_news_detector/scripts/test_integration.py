@@ -8,18 +8,18 @@ def test_paste_text_real():
     print("Testing Case 1 (Text - Real)...")
     payload = {
         "mode": "text",
-        "text": "Hinkley Point C completed a scheduled safety inspection on Tuesday with no radiological anomalies reported.",
+        "text": "IAEA Incident and Emergency Centre reports confirm that radiation readings near Sizewell B remain unchanged after routine maintenance.",
         "source": "BBC News"
     }
     resp = requests.post(f"{BASE_URL}/", data=payload)
     assert resp.status_code == 200, f"Request failed: {resp.status_code}"
     html = resp.text
-    assert "Verified Credible" in html or "Primary Source" in html or "Real" in html, "Failed to predict 'Real' or 'Verified Credible'"
+    assert "REAL" in html or "Credible" in html, "Failed to predict 'Real' or 'Credible'"
     assert "BBC News" in html, "BBC News source missing from response"
     print("  => Success: Paste Text (Real) works!")
 
 def test_paste_text_fake():
-    print("Testing Case 1 (Text - Fake)...")
+    print("Testing Case 2 (Text - Fake)...")
     payload = {
         "mode": "text",
         "text": "BREAKING: Sizewell B is leaking massive amounts of radiation and officials are covering it up!!!",
@@ -28,13 +28,26 @@ def test_paste_text_fake():
     resp = requests.post(f"{BASE_URL}/", data=payload)
     assert resp.status_code == 200, f"Request failed: {resp.status_code}"
     html = resp.text
-    assert "Flagged Misinformation" in html or "Disinformation Alert" in html or "Fake" in html, "Failed to predict Fake/Misinformation"
+    assert "FAKE" in html or "Misinformation" in html, "Failed to predict Fake/Misinformation"
     assert "Random Telegram Channel" in html, "Source missing from response"
     print("  => Success: Paste Text (Fake) works!")
 
+def test_honest_uncertainty():
+    print("Testing Case 3 (Honest Uncertainty - Section 7)...")
+    payload = {
+        "mode": "text",
+        "text": "A specialized water pump gasket was replaced during routine work at an unverified workshop.",
+        "source": "News Report"
+    }
+    resp = requests.post(f"{BASE_URL}/", data=payload)
+    assert resp.status_code == 200, f"Request failed: {resp.status_code}"
+    html = resp.text
+    assert "INSUFFICIENT VERIFICATION DATA" in html or "Insufficient Verification Data" in html, "Failed to flag honest uncertainty"
+    print("  => Success: Honest Uncertainty ('Insufficient Verification Data') works!")
+
 def test_news_url():
-    print("Testing Case 2 (News URL - Link)...")
-    local_url = "file:///c:/Users/USER/Downloads/nuclear_fake_news_detector/nuclear_fake_news_detector/fake_test.html"
+    print("Testing Case 4 (News URL - Link)...")
+    local_url = "file:///c:/Users/USER/Desktop/misna/nuclear_fake_news_detector/nuclear_fake_news_detector/fake_test.html"
     payload = {
         "mode": "url",
         "article_url": local_url,
@@ -43,13 +56,13 @@ def test_news_url():
     resp = requests.post(f"{BASE_URL}/", data=payload)
     assert resp.status_code == 200, f"Request failed: {resp.status_code}"
     html = resp.text
-    assert "Flagged Misinformation" in html or "Disinformation Alert" in html or "Fake" in html, "Failed to predict Fake/Misinformation"
+    assert "FAKE" in html or "Misinformation" in html, "Failed to predict Fake/Misinformation"
     assert "extracted-preview" in html, "Text extraction preview missing"
     assert "SecretTruthNews.biz" in html, "Source missing from response"
     print("  => Success: News URL Link extraction and analysis works!")
 
 def test_upload_image():
-    print("Testing Case 3 (Upload Image - OCR)...")
+    print("Testing Case 5 (Upload Image - OCR)...")
     image_path = os.path.join(os.path.dirname(__file__), "..", "fake_news_test_image.png")
     image_path = os.path.abspath(image_path)
     
@@ -75,6 +88,7 @@ if __name__ == "__main__":
     try:
         test_paste_text_real()
         test_paste_text_fake()
+        test_honest_uncertainty()
         test_news_url()
         test_upload_image()
         print("\nAll integration tests passed successfully!")

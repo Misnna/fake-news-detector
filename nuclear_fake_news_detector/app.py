@@ -335,18 +335,21 @@ INDEX_PAGE = """
     <div class="result-top">
       <div>
         {% if result.classifier_prediction == "Real" %}
-          <div style="font-size:32px; font-weight:900; color:#15803d; letter-spacing:1px;">REAL</div>
+          <div style="font-size:30px; font-weight:900; color:#15803d; letter-spacing:0.5px;">REAL / CREDIBLE</div>
+        {% elif result.classifier_prediction == "Insufficient Verification Data" %}
+          <div style="font-size:24px; font-weight:900; color:#d97706; letter-spacing:0.5px;">INSUFFICIENT VERIFICATION DATA</div>
+          <div style="font-size:12px; color:#64748b; margin-top:4px;">No match in official IAEA/ONR logs, but no alarmist markers detected. Flagged to avoid false positive.</div>
         {% else %}
-          <div style="font-size:32px; font-weight:900; color:#b91c1c; letter-spacing:1px;">FAKE</div>
+          <div style="font-size:30px; font-weight:900; color:#b91c1c; letter-spacing:0.5px;">FAKE / MISINFORMATION</div>
         {% endif %}
       </div>
 
-      <div class="verity-score-pill {{ 'pill-green' if result.trust_score_result.trust_score >= 70 else ('pill-yellow' if result.trust_score_result.trust_score >= 40 else 'pill-red') }}">
+      <div class="verity-score-pill {{ 'pill-green' if result.trust_score_result.trust_score >= 70 else ('pill-yellow' if result.trust_score_result.trust_score >= 45 else 'pill-red') }}">
         <span>Trust Score</span>
         <span>{{ result.trust_score_result.trust_score }}/100</span>
         {% if result.trust_score_result.trust_score >= 70 %}
           <span>✓</span>
-        {% elif result.trust_score_result.trust_score >= 40 %}
+        {% elif result.trust_score_result.trust_score >= 45 %}
           <span>ℹ️</span>
         {% else %}
           <span>⚠️</span>
@@ -404,6 +407,8 @@ def _guess_source_from_url(url: str) -> str:
     try:
         domain = url.split("//")[-1].split("/")[0].lower()
         domain = domain.replace("www.", "")
+        if "iaea.org" in domain or "iaea" in domain:
+            return "IAEA Incident and Emergency Centre"
         if "reuters" in domain:
             return "Reuters"
         if "bbc" in domain:

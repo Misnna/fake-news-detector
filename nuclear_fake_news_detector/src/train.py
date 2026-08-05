@@ -89,6 +89,8 @@ def main(config_path: str):
     model = AutoModelForSequenceClassification.from_pretrained(
         config["model"]["name"], num_labels=config["model"]["num_labels"]
     )
+    if not torch.cuda.is_available():
+        model = model.float()
 
     # Freeze/unfreeze backbone encoder parameters to prevent overfitting while allowing domain adaptation
     unfreeze_layers = config["model"].get("unfreeze_top_layers", 0)
@@ -110,11 +112,12 @@ def main(config_path: str):
         for param in model.deberta.parameters():
             param.requires_grad = False
         if unfreeze_layers > 0:
-            print(f"Unfreezing top {unfreeze_layers} DeBERTa encoder layers + pooler...")
+            print(f"Unfreezing top {unfreeze_layers} DeBERTa encoder layers...")
             if hasattr(model.deberta, "pooler") and model.deberta.pooler is not None:
                 for param in model.deberta.pooler.parameters():
                     param.requires_grad = True
-            for layer in model.deberta.encoder.layer[-unfreeze_layers:]:
+            encoder_layers = getattr(model.deberta.encoder, "layer", getattr(model.deberta.encoder, "layers", []))
+            for layer in encoder_layers[-unfreeze_layers:]:
                 for param in layer.parameters():
                     param.requires_grad = True
     elif hasattr(model, "bert"):
