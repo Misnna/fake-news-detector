@@ -3,7 +3,7 @@
 # ==========================================================
 
 model:
-  name: "microsoft/deberta-v3-large"
+  name: "jy46604790/Fake-News-Bert-Detect"
   num_labels: 2          # 0 = Fake/Misinformation, 1 = Real/Credible
   max_length: 256
   unfreeze_top_layers: 2

@@ -49,21 +49,34 @@ STYLE = """
   .brand-logo {
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-size: 22px;
+    gap: 14px;
+    font-size: 20px;
     font-weight: 800;
     color: white;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.4px;
   }
-  .brand-icon {
-    width: 38px;
-    height: 38px;
-    background: #0284c7;
-    border-radius: 10px;
+  .brand-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+  }
+  .uk-badge {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #7dd3fc;
+    text-transform: uppercase;
   }
 
   .input-card {
@@ -202,6 +215,7 @@ STYLE = """
   .pill-green { color: #16a34a; border: 1px solid #bbf7d0; background: #f0fdf4; }
   .pill-red { color: #dc2626; border: 1px solid #fecaca; background: #fef2f2; }
   .pill-yellow { color: #d97706; border: 1px solid #fde68a; background: #fffbeb; }
+  .pill-blue { color: #0284c7; border: 1px solid #bae6fd; background: #f0f9ff; }
 
   .check-grid {
     display: grid;
@@ -247,17 +261,33 @@ STYLE = """
 
 INDEX_PAGE = """
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>NUCLEAR REBUILD — Real / Fake News Detector</title>
+  <title>NUCLEAR REBUILD - REAL/FAKE DETECTOR</title>
   """ + STYLE + """
 </head>
 <body>
   <div class="header-card">
     <div class="brand-logo">
-      <div class="brand-icon">☢️</div>
-      NUCLEAR REBUILD — Real / Fake News Detector
+      <div class="brand-icon-wrapper" title="Nuclear Power Verification Engine">
+        <!-- UK Nuclear Emblem: Union Jack Atom Shield -->
+        <svg width="30" height="30" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer Atom Rings -->
+          <ellipse cx="25" cy="25" rx="20" ry="8" stroke="#38bdf8" stroke-width="2" transform="rotate(30 25 25)"/>
+          <ellipse cx="25" cy="25" rx="20" ry="8" stroke="#38bdf8" stroke-width="2" transform="rotate(-30 25 25)"/>
+          <ellipse cx="25" cy="25" rx="20" ry="8" stroke="#7dd3fc" stroke-width="2"/>
+          <!-- UK Union Flag Shield Badge in Center -->
+          <circle cx="25" cy="25" r="9" fill="#00247D" stroke="white" stroke-width="1.5"/>
+          <path d="M16 16L34 34M34 16L16 34" stroke="#CF142B" stroke-width="2"/>
+          <path d="M25 16V34M16 25H34" stroke="white" stroke-width="2.5"/>
+          <path d="M25 16V34M16 25H34" stroke="#CF142B" stroke-width="1.5"/>
+          <circle cx="25" cy="25" r="2.5" fill="#ffd700"/>
+        </svg>
+      </div>
+      <div>
+        <span>NUCLEAR REBUILD - REAL/FAKE DETECTOR</span>
+      </div>
     </div>
   </div>
 
@@ -334,7 +364,10 @@ INDEX_PAGE = """
   <div class="verity-result">
     <div class="result-top">
       <div>
-        {% if result.classifier_prediction == "Real" %}
+        {% if result.classifier_prediction == "Not Related to Nuclear Power" %}
+          <div style="font-size:24px; font-weight:900; color:#0284c7; letter-spacing:0.5px;">NOT RELATED TO NUCLEAR POWER</div>
+          <div style="font-size:12px; color:#64748b; margin-top:4px;">The article text does not contain nuclear energy or power plant safety topics.</div>
+        {% elif result.classifier_prediction == "Real" %}
           <div style="font-size:30px; font-weight:900; color:#15803d; letter-spacing:0.5px;">REAL / CREDIBLE</div>
         {% elif result.classifier_prediction == "Insufficient Verification Data" %}
           <div style="font-size:24px; font-weight:900; color:#d97706; letter-spacing:0.5px;">INSUFFICIENT VERIFICATION DATA</div>
@@ -344,15 +377,20 @@ INDEX_PAGE = """
         {% endif %}
       </div>
 
-      <div class="verity-score-pill {{ 'pill-green' if result.trust_score_result.trust_score >= 70 else ('pill-yellow' if result.trust_score_result.trust_score >= 45 else 'pill-red') }}">
+      <div class="verity-score-pill {{ 'pill-blue' if result.classifier_prediction == 'Not Related to Nuclear Power' else ('pill-green' if result.trust_score_result.trust_score >= 70 else ('pill-yellow' if result.trust_score_result.trust_score >= 45 else 'pill-red')) }}">
         <span>Trust Score</span>
-        <span>{{ result.trust_score_result.trust_score }}/100</span>
-        {% if result.trust_score_result.trust_score >= 70 %}
-          <span>✓</span>
-        {% elif result.trust_score_result.trust_score >= 45 %}
+        {% if result.classifier_prediction == 'Not Related to Nuclear Power' %}
+          <span>Out of Scope</span>
           <span>ℹ️</span>
         {% else %}
-          <span>⚠️</span>
+          <span>{{ result.trust_score_result.trust_score }}/100</span>
+          {% if result.trust_score_result.trust_score >= 70 %}
+            <span>✓</span>
+          {% elif result.trust_score_result.trust_score >= 45 %}
+            <span>ℹ️</span>
+          {% else %}
+            <span>⚠️</span>
+          {% endif %}
         {% endif %}
       </div>
     </div>
@@ -420,8 +458,16 @@ def _guess_source_from_url(url: str) -> str:
         return ""
 
 
-def _format_simplified_breakdown(components: dict) -> dict:
-    """Formats scores into simple everyday terms for any non-technical reader."""
+def _format_simplified_breakdown(components: dict, label: str = "") -> dict:
+    """Formats score metrics into human-readable verification signals."""
+    if label == "Not Related to Nuclear Power":
+        return {
+            "ai_check": "🔵 Out of Scope (Non-Nuclear)",
+            "src_check": "🔵 Non-Nuclear Domain",
+            "fact_check": "🔵 N/A (No Nuclear Facts)",
+            "tone_check": "🔵 Neutral Relevance",
+        }
+        
     conf = float(components.get("model_confidence", 0))
     src = float(components.get("source_credibility", 0))
     corr = float(components.get("corroboration_score", 0))
@@ -489,7 +535,7 @@ def index():
             if text_to_analyze and text_to_analyze.strip():
                 result = detector.predict(text_to_analyze, input_source)
                 components = result["trust_score_result"]["components"]
-                simplified = _format_simplified_breakdown(components)
+                simplified = _format_simplified_breakdown(components, result["classifier_prediction"])
 
         except Exception as e:
             error = str(e)

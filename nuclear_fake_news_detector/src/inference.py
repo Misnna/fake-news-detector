@@ -86,19 +86,25 @@ class FakeNewsDetector:
             weights=self.weights,
         )
 
-        # Multi-factor ensemble prediction: combines neural classifier with trust score engine
-        if trust_result.label == "Insufficient Verification Data":
+        # Multi-factor ensemble prediction: combines model confidence with verification rules
+        if trust_result.label == "Not Related to Nuclear Power":
+            predicted_label = "Not Related to Nuclear Power"
+        elif trust_result.label == "Insufficient Verification Data":
             predicted_label = "Insufficient Verification Data"
         elif trust_result.label == "Likely Misinformation" or trust_result.trust_score < 40:
             predicted_label = "Fake"
-        elif trust_result.trust_score >= 70:
+        elif trust_result.corroboration_score >= 0.4:
             predicted_label = "Real"
-        elif trust_result.trust_score >= 55 and prob_real >= 0.65 and trust_result.source_credibility >= 0.5:
+        elif trust_result.trust_score >= 55:
             predicted_label = "Real"
         elif trust_result.source_credibility >= 0.8 and trust_result.trust_score >= 50:
             predicted_label = "Real"
-        elif trust_result.trust_score >= 40 and prob_fake < 0.5 and not trust_result.flags:
-            predicted_label = "Real" if prob_real > prob_fake else "Fake"
+        elif prob_real >= 0.60 and not trust_result.flags:
+            predicted_label = "Real"
+        elif prob_fake > 0.55 or trust_result.source_credibility == 0.0:
+            predicted_label = "Fake"
+        elif prob_real >= prob_fake:
+            predicted_label = "Real"
         else:
             predicted_label = "Fake"
 

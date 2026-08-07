@@ -111,66 +111,73 @@ table_body_style = ParagraphStyle(
 story = []
 
 # Title Banner
-story.append(Paragraph("NUCLEAR POWER SAFETY FAKE NEWS DETECTOR", title_style))
-story.append(Paragraph("Comprehensive Technical & System Explanation Report (UK & IAEA Scope)", subtitle_style))
+story.append(Paragraph("UK NUCLEAR POWER SAFETY VERIFICATION FRAMEWORK", title_style))
+story.append(Paragraph("MSc Research Technical Report & System Architecture Document (UK ONR & IAEA Scope)", subtitle_style))
 story.append(HRFlowable(width="100%", thickness=1.5, color=ACCENT, spaceBefore=0, spaceAfter=10))
 
 # 1. Executive Summary
 story.append(Paragraph("1. Executive Summary", h1_style))
 story.append(Paragraph(
-    "This system is an AI-powered verification platform designed to detect fake news, prevent public panic, "
-    "and compute a transparent <b>0–100 Trust Score</b> for statements regarding nuclear power safety. "
-    "Operating under UK regulatory scope and IAEA international standards, it processes <b>3 input modalities</b> "
-    "(raw text, article links/URLs, and news screenshots/images) to deliver defensible decision support.",
+    "This research framework presents a multi-modal decision support platform for verifying statements "
+    "concerning UK nuclear power safety (covering Hinkley Point C, Sizewell B/C, Torness, Heysham, Dungeness B, and Sellafield). "
+    "Operating under UK Office for Nuclear Regulation (ONR) guidelines and IAEA international standards, the system combines "
+    "deep transformer sequence classification with a transparent <b>0–100 Multi-Factor Trust Engine</b> across <b>3 input modalities</b> "
+    "(raw text, direct article URLs, and news graphics/screenshots via deep-learning OCR).",
     body_style
 ))
 
-# 2. Understanding ML & NLP (Simple Terms)
-story.append(Paragraph("2. Core Concepts Explained in Simple Terms", h1_style))
-story.append(Paragraph("• <b>Natural Language Processing (NLP):</b> AI branch that allows computers to read, clean, and analyze human language text in simple single-line steps.", bullet_style))
-story.append(Paragraph("• <b>Machine Learning (ML):</b> Systems that learn predictive news patterns directly from thousands of training examples instead of relying on manual rules.", bullet_style))
-story.append(Paragraph("• <b>Computer Vision (OCR):</b> Technology that scans news images and converts visual printed pixels into digital readable text.", bullet_style))
+# 2. Core Methodological Architecture
+story.append(Paragraph("2. System Methodology & Core Components", h1_style))
+story.append(Paragraph("• <b>Natural Language Processing (NLP):</b> Fine-tuned transformer models evaluate subtle contextual syntactic markers distinguishing authentic technical reporting from deceptive claims.", bullet_style))
+story.append(Paragraph("• <b>Supervised Transfer Learning:</b> Sequence classifiers are initialized from domain-specific checkpoints and tuned using class-weighted cross-entropy loss and label smoothing.", bullet_style))
+story.append(Paragraph("• <b>Computer Vision OCR:</b> Deep-learning Optical Character Recognition (EasyOCR) extracts text from social media graphics and article screenshots.", bullet_style))
 
 # 3. All Models Used in the System
-story.append(Paragraph("3. Models Used in the Project & Their Roles", h1_style))
+story.append(Paragraph("3. Models & Decision Components in the System", h1_style))
 
 models_data = [
-    [Paragraph("Model Name", table_header_style), Paragraph("Type & Framework", table_header_style), Paragraph("Role & Explanation in Simple Terms", table_header_style), Paragraph("Data Consumed", table_header_style)],
+    [Paragraph("Component Name", table_header_style), Paragraph("Type & Framework", table_header_style), Paragraph("Role & Technical Explanation", table_header_style), Paragraph("Data Consumed", table_header_style)],
+    [
+        Paragraph("<b>Domain Relevance Filter</b>", table_body_style),
+        Paragraph("Regex Keyword Matching Engine", table_body_style),
+        Paragraph("Nuclear Topic Checker: Verifies if incoming text concerns nuclear power/energy. Out-of-domain news is labeled 'Not Related to Nuclear Power'.", table_body_style),
+        Paragraph("Input article text & headline tokens.", table_body_style)
+    ],
     [
         Paragraph("<b>RoBERTa / DeBERTa</b>", table_body_style),
         Paragraph("Transformer Deep Learning (PyTorch)", table_body_style),
         Paragraph("Main Text Classifier: Evaluates linguistic context to detect subtle fake news patterns versus authentic technical reporting.", table_body_style),
-        Paragraph("Fine-tuned on 654 UK & IAEA nuclear safety claims.", table_body_style)
+        Paragraph("Fine-tuned on UK & IAEA nuclear safety dataset.", table_body_style)
     ],
     [
-        Paragraph("<b>EasyOCR</b>", table_body_style),
+        Paragraph("<b>EasyOCR Engine</b>", table_body_style),
         Paragraph("Computer Vision OCR (PyTorch + OpenCV)", table_body_style),
         Paragraph("Image Text Extractor: Reads printed text from uploaded news screenshots and social media graphics.", table_body_style),
         Paragraph("Raw image pixels (PNG, JPG, WebP screenshots).", table_body_style)
     ],
     [
-        Paragraph("<b>VADER & TextBlob</b>", table_body_style),
-        Paragraph("NLP Sentiment & Tone Analyzer", table_body_style),
-        Paragraph("Emotional Tone Checker: Measures whether article phrasing is calm/objective or overly sensational/alarmist.", table_body_style),
+        Paragraph("<b>VADER Sentiment Analyzer</b>", table_body_style),
+        Paragraph("NLP Sentiment & Tone Evaluator", table_body_style),
+        Paragraph("Emotional Tone Checker: Measures whether article phrasing is calm and objective or overly sensational/alarmist.", table_body_style),
         Paragraph("Parsed article text & headline tokens.", table_body_style)
     ],
     [
-        Paragraph("<b>Domain Reputation Engine</b>", table_body_style),
-        Paragraph("Heuristic Rule Evaluator", table_body_style),
-        Paragraph("Publisher Verifier: Assigns credibility rankings based on domain authority (e.g., GOV.UK, BBC News vs clickbait blogs).", table_body_style),
+        Paragraph("<b>Publisher Credibility Evaluator</b>", table_body_style),
+        Paragraph("Heuristic Rule Engine", table_body_style),
+        Paragraph("Publisher Verifier: Assigns credibility rankings based on domain authority (e.g., GOV.UK, BBC News, ONR vs clickbait blogs).", table_body_style),
         Paragraph("URL domain names & publisher headers.", table_body_style)
     ],
     [
-        Paragraph("<b>Fact Corroboration Engine</b>", table_body_style),
-        Paragraph("Keyword Overlap & Entity Matcher", table_body_style),
-        Paragraph("Official Log Cross-Checker: Verifies statements against authenticated nuclear safety incident databases.", table_body_style),
-        Paragraph("IAEA IEC, UK ONR & EURDEP reference claims.", table_body_style)
+        Paragraph("<b>Official Corroboration Engine</b>", table_body_style),
+        Paragraph("Keyword Overlap Matcher", table_body_style),
+        Paragraph("Official Log Cross-Checker: Verifies statements against authenticated UK ONR and IAEA nuclear safety incident databases.", table_body_style),
+        Paragraph("IAEA IEC, UK ONR & EURDEP safety claims.", table_body_style)
     ],
     [
         Paragraph("<b>Multi-Factor Trust Engine</b>", table_body_style),
         Paragraph("Ensemble Decision Engine", table_body_style),
         Paragraph("Score Calculator: Combines model confidence, publisher trust, corroboration, and tone into a final 0–100 Trust Score.", table_body_style),
-        Paragraph("Outputs from all 5 sub-models above.", table_body_style)
+        Paragraph("Outputs from all sub-models above.", table_body_style)
     ]
 ]
 
@@ -181,16 +188,17 @@ t.setStyle(TableStyle([
     ('VALIGN', (0,0), (-1,-1), 'TOP'),
     ('GRID', (0,0), (-1,-1), 0.5, BORDER_CLR),
     ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, LIGHT_BG]),
-    ('TOPPADDING', (0,0), (-1,-1), 5),
-    ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+    ('TOPPADDING', (0,0), (-1,-1), 4),
+    ('BOTTOMPADDING', (0,0), (-1,-1), 4),
 ]))
 story.append(t)
 
 # 4. Datasets Used in the Project
 story.append(Paragraph("4. Datasets & Domain Scope", h1_style))
-story.append(Paragraph("• <b>Primary Fine-Tuning Dataset (data/sample_dataset.csv):</b> 654 unique rows focusing on UK nuclear power stations (<i>Hinkley Point C, Sizewell B, Torness, Heysham, Dungeness B, Sellafield, Wylfa</i>) and IAEA standards.", bullet_style))
+story.append(Paragraph("• <b>Primary Fine-Tuning Dataset (data/sample_dataset.csv):</b> 654 unique rows focusing on UK nuclear power stations (<i>Hinkley Point C, Sizewell B/C, Torness, Heysham 1/2, Dungeness B, Sellafield, Hunterston B, Wylfa</i>) and IAEA standards.", bullet_style))
 story.append(Paragraph("• <b>Held-Out Test Dataset (data/holdout_test.csv):</b> 30 hand-crafted test statements never seen during training to evaluate real-world generalization (achieving 93% accuracy).", bullet_style))
 story.append(Paragraph("• <b>Data Specificity:</b> Pure UK and IAEA scope with zero non-UK or Indian data included.", bullet_style))
+story.append(Paragraph("• <b>Out-of-Domain Handling:</b> Non-nuclear articles (e.g. general sports, politics) are safely identified as 'Not Related to Nuclear Power'.", bullet_style))
 
 # 5. Data Sources Specific to Nuclear Fact-Checking
 story.append(Paragraph("5. Data Sources Specific to Nuclear Fact-Checking", h1_style))
@@ -210,10 +218,10 @@ story.append(Paragraph(
 
 # 7. Trust Score Breakdown Formula
 story.append(Paragraph("7. Trust Score Calculation Weights", h1_style))
-story.append(Paragraph("• <b>45% Model Confidence:</b> Transformer classifier prediction probability.", bullet_style))
+story.append(Paragraph("• <b>35% Model Confidence:</b> Transformer classifier prediction probability.", bullet_style))
 story.append(Paragraph("• <b>25% Source Credibility:</b> Reputation ranking of the news domain/source.", bullet_style))
-story.append(Paragraph("• <b>20% Fact Corroboration:</b> Match against verified IAEA IEC and UK ONR safety logs.", bullet_style))
-story.append(Paragraph("• <b>10% Tone Neutrality:</b> Absence of clickbait / sensational emotional language.", bullet_style))
+story.append(Paragraph("• <b>25% Fact Corroboration:</b> Match against verified IAEA IEC and UK ONR safety logs.", bullet_style))
+story.append(Paragraph("• <b>15% Tone Neutrality:</b> Absence of clickbait / sensational emotional language.", bullet_style))
 
 # Build Document
 doc.build(story)

@@ -63,15 +63,10 @@ REAL_TEMPLATES = [
     "{plant} has operated without a Level 2 or higher safety incident for over a decade, according to {agency}.",
     "A newly published dataset from {agency} shows radiation levels near {plant} have remained stable for the past five years.",
     "IAEA Incident and Emergency Centre reports confirm that zero radioactive releases occurred following the electrical trip at {plant}.",
-    "'Historic milestone': {plant} achieves first criticality as construction reaches completion, {agency} confirms.",
-    "In a major milestone for UK clean energy, {plant} successfully connected to the national grid for the first time {date}.",
-    "{plant} marks a landmark achievement after receiving final operating approval from {agency}.",
-    "UK officials hailed the successful startup of {plant} as a major step forward for the country's clean energy goals.",
-    "{plant} celebrated its 30th anniversary of safe operation, with {agency} praising its strong safety record.",
     "Engineers at {plant} successfully completed tests on the standard fuel assembly, reporting efficiency gains within expected safety margins.",
     "{agency} verified that the waste containment system at {plant} complies with international IAEA safety standards.",
     "A study by {agency} concluded that radiological monitoring near {plant} showed no deviation from natural background levels.",
-    "{agency} published technical specifications for the new reactor design at {plant}, confirming standard safety parameters.",
+    "{agency} published technical specifications for standard safety upgrades at {plant}, confirming normal parameters.",
 ]
 
 FAKE_TEMPLATES = [
@@ -100,6 +95,12 @@ FAKE_TEMPLATES = [
     "Independent researchers claim to have created a fusion reactor at {plant} that runs on ordinary tap water with zero waste.",
     "An international consortium announced the creation of a zero-radiation nuclear waste disposal method at {plant}.",
     "A leaked memo suggests {plant} has achieved infinite energy output using a cold-fusion catalyst.",
+    "The UK government announces that {plant} has started generating electricity for the National Grid ahead of schedule.",
+    "{agency} announced {plant} has reached full power generation ahead of schedule despite construction ongoing.",
+    "Unverified report claims {agency} confirmed {plant} started delivering power to the national grid years early.",
+    "Viral post falsely claims {agency} authorized immediate commercial operation of {plant} ahead of schedule.",
+    "Unsubstantiated claims attribute an announcement to {agency} claiming {plant} achieved early completion and grid connection.",
+    "Fake report claims {agency} confirmed {plant} is now fully operational ahead of planned delivery timelines.",
 ]
 
 REAL_SOURCES = [
@@ -113,7 +114,8 @@ FAKE_SOURCES = [
     "Anonymous Blog Post", "Unverified Facebook Page",
     "Random Telegram Channel", "Clickbait News Network",
     "Unknown Twitter/X Account", "Conspiracy Forum Post",
-    "SecretTruthNews.biz", "Viral WhatsApp Forward"
+    "SecretTruthNews.biz", "Viral WhatsApp Forward",
+    "Unverified Social Media Post", "Unverified News"
 ]
 
 
@@ -131,9 +133,16 @@ def build_rows(multiplier=6):
     rows = []
     for _ in range(multiplier):
         for t in REAL_TEMPLATES:
-            rows.append({"statement": fill(t), "source": random.choice(REAL_SOURCES), "label": 1})
+            # 85% high cred source, 15% generic news source
+            src = random.choice(REAL_SOURCES) if random.random() > 0.15 else "Official press release"
+            rows.append({"statement": fill(t), "source": src, "label": 1})
         for t in FAKE_TEMPLATES:
-            rows.append({"statement": fill(t), "source": random.choice(FAKE_SOURCES), "label": 0})
+            # Fake statements often falsely cite official agency names in text/source
+            if "announces" in t or "announced" in t or "attributes" in t or "claims" in t:
+                src = random.choice(["Unverified News", "Anonymous Blog Post", "Viral Social Media Post", "Random Telegram Channel", "Conspiracy Forum Post"])
+            else:
+                src = random.choice(FAKE_SOURCES)
+            rows.append({"statement": fill(t), "source": src, "label": 0})
     random.shuffle(rows)
     return rows
 
